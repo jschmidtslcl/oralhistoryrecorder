@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Recorder</title>
+    <style>
+        #startButton, #stopButton {
+            display: block;
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #videoPlayer {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video/Audio Recorder</h1>
+    <button id="startButton">Start Recording</button>
+    <button id="stopButton" disabled>Stop Recording</button>
+    <video id="videoPlayer" controls></video>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const videoPlayer = document.getElementById('videoPlayer');
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.addEventListener('dataavailable', function(event) {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            });
+
+            mediaRecorder.addEventListener('stop', function() {
+                const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoUrl = URL.createObjectURL(videoBlob);
+                videoPlayer.src = videoUrl;
+            });
+
+            recordedChunks = [];
+            mediaRecorder.start();
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+    </script>
+</body>
+</html>
